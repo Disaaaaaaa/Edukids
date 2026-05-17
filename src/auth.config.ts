@@ -19,5 +19,6 @@ export const authConfig = {
     }
   },
   providers: [],
-  secret: "edukids-super-secret-key-12345",
+  secret: process.env.AUTH_SECRET,
+  trustHost: true,
 } satisfies NextAuthConfig

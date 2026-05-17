@@ -11,7 +11,7 @@ const ROLE_ROUTES = {
   "/admin": "admin",
 }
 
-export default auth((req) => {
+export const proxy = auth((req) => {
   const { nextUrl } = req
   const isLoggedIn = !!req.auth
   const role = req.auth?.user?.role as string | undefined
