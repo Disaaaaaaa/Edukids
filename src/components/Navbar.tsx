@@ -15,8 +15,8 @@ export async function Navbar() {
         </Link>
         <nav className="hidden md:flex gap-6 items-center font-medium">
           <Link href="/about" className="hover:text-primary transition-colors">Жоба туралы</Link>
+          <Link href="/experiment" className="hover:text-primary transition-colors">Эксперимент</Link>
           <Link href="/diagnostic-info" className="hover:text-primary transition-colors">Диагностика</Link>
-          <Link href="#" className="hover:text-primary transition-colors">PISA</Link>
           <Link href="#" className="hover:text-primary transition-colors">TIMSS</Link>
           <Link href="#" className="hover:text-primary transition-colors">PIRLS</Link>
         </nav>
