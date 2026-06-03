@@ -217,6 +217,51 @@ export default async function TeacherAnalyticsPage() {
   const hardestTasks = [...taskAnalysisAll].sort((a, b) => a.successRate - b.successRate).slice(0, 8)
   const easiestTasks = [...taskAnalysisAll].sort((a, b) => b.successRate - a.successRate).slice(0, 8)
 
+  // 9. Қорытынды тестінің бөлім бойынша талдауы
+  // (FINAL тесттерден sectionBreakdown оқимыз)
+  const finalResults = results.filter((r) => r.assessment.program_type === "FINAL")
+  type SectionAgg = { sum: number; count: number; max: number }
+  const sectionsAgg: Record<"reading" | "math" | "science", SectionAgg> = {
+    reading: { sum: 0, count: 0, max: 10 },
+    math: { sum: 0, count: 0, max: 10 },
+    science: { sum: 0, count: 0, max: 10 },
+  }
+  const studentSectionRows: { name: string; reading: number; math: number; science: number; total: number }[] = []
+
+  finalResults.forEach((r) => {
+    try {
+      const parsed = JSON.parse(r.answersJson || "{}")
+      const sb = parsed.sectionBreakdown as { reading?: number; math?: number; science?: number } | undefined
+      if (sb) {
+        const reading = Number(sb.reading ?? 0)
+        const math = Number(sb.math ?? 0)
+        const science = Number(sb.science ?? 0)
+        sectionsAgg.reading.sum += reading; sectionsAgg.reading.count += 1
+        sectionsAgg.math.sum += math; sectionsAgg.math.count += 1
+        sectionsAgg.science.sum += science; sectionsAgg.science.count += 1
+        studentSectionRows.push({
+          name: r.user.name || "Атаусыз",
+          reading: Math.round((reading / 10) * 100),
+          math: Math.round((math / 10) * 100),
+          science: Math.round((science / 10) * 100),
+          total: Math.round(r.percentage),
+        })
+      }
+    } catch { /* skip */ }
+  })
+
+  function pctOrNull(a: SectionAgg) {
+    if (a.count === 0) return null
+    return Math.round((a.sum / a.count / a.max) * 1000) / 10
+  }
+  const finalBreakdown = finalResults.length === 0 ? null : {
+    avgReading: pctOrNull(sectionsAgg.reading) ?? 0,
+    avgMath: pctOrNull(sectionsAgg.math) ?? 0,
+    avgScience: pctOrNull(sectionsAgg.science) ?? 0,
+    attempts: finalResults.length,
+    students: studentSectionRows.sort((a, b) => b.total - a.total),
+  }
+
   const stats = {
     totalTests,
     uniqueStudents,
@@ -249,6 +294,7 @@ export default async function TeacherAnalyticsPage() {
           studentAnalytics={studentAnalytics}
           hardestTasks={hardestTasks}
           easiestTasks={easiestTasks}
+          finalBreakdown={finalBreakdown}
         />
       )}
     </div>

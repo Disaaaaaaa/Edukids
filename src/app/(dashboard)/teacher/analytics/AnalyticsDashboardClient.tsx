@@ -21,6 +21,14 @@ type StudentRow = {
   taskBreakdown: { taskTitle: string; assessment: string; earned: number; max: number; pct: number }[]
 }
 
+type FinalBreakdown = {
+  avgReading: number
+  avgMath: number
+  avgScience: number
+  attempts: number
+  students: { name: string; reading: number; math: number; science: number; total: number }[]
+}
+
 type AnalyticsProps = {
   stats: {
     totalTests: number
@@ -36,6 +44,7 @@ type AnalyticsProps = {
   studentAnalytics: StudentRow[]
   hardestTasks: { title: string; assessment: string; program: string; attempts: number; successRate: number; avgEarned: number; maxScore: number }[]
   easiestTasks: { title: string; assessment: string; program: string; attempts: number; successRate: number; avgEarned: number; maxScore: number }[]
+  finalBreakdown: FinalBreakdown | null
 }
 
 const PROGRAM_COLORS: Record<string, string> = {
@@ -66,7 +75,7 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 
 export function AnalyticsDashboardClient({
   stats, trendData, programPerformance, streakRanking,
-  studentAnalytics, hardestTasks, easiestTasks,
+  studentAnalytics, hardestTasks, easiestTasks, finalBreakdown,
 }: AnalyticsProps) {
   const [selectedStudentId, setSelectedStudentId] = useState<string>(
     studentAnalytics[0]?.id ?? ""
@@ -83,6 +92,63 @@ export function AnalyticsDashboardClient({
         <KpiCard icon={<Flame className="h-4 w-4 text-orange-500" />} label="Орташа streak" value={`${stats.avgStreak} күн`} />
         <KpiCard icon={<Activity className="h-4 w-4" />} label="Топ-программа" value={stats.topProgram} />
       </div>
+
+      {/* 1.5. Қорытынды тест бөлімдер бойынша */}
+      {finalBreakdown && (
+        <Card className="border-2 border-yellow-300/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-yellow-500" />
+              Қорытынды тест — бөлімдер бойынша талдау
+            </CardTitle>
+            <CardDescription>
+              30 баллдан тұратын соңғы бағалау: оқу + математика + жаратылыстану.
+              Қазіргі сыныптан {finalBreakdown.attempts} оқушы тапсырған.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+              <SectionTile label="Оқу сауаттылығы" value={finalBreakdown.avgReading} color="#2563eb" />
+              <SectionTile label="Математика" value={finalBreakdown.avgMath} color="#16a34a" />
+              <SectionTile label="Жаратылыстану" value={finalBreakdown.avgScience} color="#ea580c" />
+            </div>
+
+            <h4 className="font-semibold mb-2">Бөлімдердің сынып бойынша орташасы</h4>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart
+                data={[
+                  { section: "Оқу сауаттылығы", pct: finalBreakdown.avgReading },
+                  { section: "Математика", pct: finalBreakdown.avgMath },
+                  { section: "Жаратылыстану", pct: finalBreakdown.avgScience },
+                ]}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="section" tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="pct" name="Сынып орташасы, %">
+                  <Cell fill="#2563eb" />
+                  <Cell fill="#16a34a" />
+                  <Cell fill="#ea580c" />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+
+            <h4 className="font-semibold mt-6 mb-2">Әр оқушының бөлімдер бойынша нәтижесі (топ-10)</h4>
+            <ResponsiveContainer width="100%" height={Math.max(280, Math.min(finalBreakdown.students.length, 10) * 32 + 40)}>
+              <BarChart data={finalBreakdown.students.slice(0, 10)} layout="vertical" margin={{ left: 90 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={140} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="reading" name="Оқу, %" fill="#2563eb" />
+                <Bar dataKey="math" name="Математика, %" fill="#16a34a" />
+                <Bar dataKey="science" name="Жаратылыстану, %" fill="#ea580c" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 2. Соңғы 7 күн белсенділігі мен программалар */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -336,6 +402,16 @@ function MiniStat({ label, value, icon }: { label: string; value: string | numbe
         {icon}
       </div>
       <p className="text-xl font-bold mt-1">{value}</p>
+    </div>
+  )
+}
+
+function SectionTile({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="border rounded-xl p-4" style={{ borderLeftColor: color, borderLeftWidth: 4 }}>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="text-3xl font-bold mt-1" style={{ color }}>{value}%</p>
+      <p className="text-xs text-muted-foreground mt-1">Сынып орташасы</p>
     </div>
   )
 }
