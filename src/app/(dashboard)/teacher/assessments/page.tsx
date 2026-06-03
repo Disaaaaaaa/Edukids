@@ -42,8 +42,13 @@ export default async function AssessmentsPage() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {assessments.map((assessment: any) => (
-          <Card key={assessment.id} className="hover:shadow-md transition-shadow relative">
-            <CardHeader>
+          <Card key={assessment.id} className="hover:shadow-md transition-shadow relative group">
+            <Link
+              href={`/teacher/assessments/${assessment.id}`}
+              className="absolute inset-0 z-0"
+              aria-label={`${assessment.title} — толығырақ`}
+            />
+            <CardHeader className="relative z-[1]">
               <div className="flex justify-between items-start gap-4">
                 <div>
                   <div className="flex items-center gap-2">
@@ -54,19 +59,19 @@ export default async function AssessmentsPage() {
                   </div>
                   <CardDescription className="mt-1">{assessment.grade_level}-сынып • {assessment.difficulty === 'MEDIUM' ? 'Орташа' : assessment.difficulty}</CardDescription>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="relative z-[2] flex items-center gap-2 shrink-0">
                   <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">
                     {assessment.program_type}
                   </span>
-                  <AssessmentCardMenu 
-                    id={assessment.id} 
-                    isPublished={assessment.isPublished} 
-                    canEdit={assessment.teacherId === user.id || assessment.teacherId === null} 
+                  <AssessmentCardMenu
+                    id={assessment.id}
+                    isPublished={assessment.isPublished}
+                    canEdit={assessment.teacherId === user.id || assessment.teacherId === null}
                   />
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative z-[1]">
               <div className="flex flex-col gap-2 text-sm text-muted-foreground mt-2">
                 <div className="flex items-center gap-2">
                   <Clock className="size-4" /> <span>{assessment.duration} минут</span>
@@ -76,7 +81,7 @@ export default async function AssessmentsPage() {
                 </div>
                 <div className="mt-4 pt-4 border-t flex justify-between items-center text-xs">
                   <span>Орындалды: {assessment._count.results} рет</span>
-                  <span className="text-primary hover:underline cursor-pointer">Толығырақ &rarr;</span>
+                  <span className="text-primary group-hover:underline font-medium">Толығырақ &rarr;</span>
                 </div>
               </div>
             </CardContent>
